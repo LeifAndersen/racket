@@ -32,6 +32,7 @@
 #include "schpriv.h"
 #include "schexpobs.h"
 #include "schmach.h"
+#include "schchap.h"
 
 /* The implementations of the time primitives, such as
    `current-seconds', vary a lot from platform to platform. */
@@ -119,6 +120,12 @@ THREAD_LOCAL_DECL(static Scheme_Overflow *offstack_overflow);
 
 THREAD_LOCAL_DECL(int scheme_cont_capture_count);
 THREAD_LOCAL_DECL(static int scheme_prompt_capture_count);
+
+#if COUNT_CHAPS
+int proc_makes, proc_apps;
+int vec_makes, vec_apps;
+int struct_makes, struct_apps;
+#endif
 
 /* locals */
 static Scheme_Object *procedure_p (int argc, Scheme_Object *argv[]);
@@ -3046,6 +3053,14 @@ static Scheme_Object *do_chaperone_procedure(const char *name, const char *whati
   Scheme_Object *val = argv[0], *orig, *naya, *r;
   Scheme_Hash_Tree *props;
 
+#if COUNT_CHAPS
+  proc_makes++;
+#endif
+  
+#if SHORT_CIRCUIT_CHAP_PROC
+  return argv[0];
+#endif
+
   if (SCHEME_CHAPERONEP(val))
     val = SCHEME_CHAPERONE_VAL(val);
 
@@ -3177,6 +3192,17 @@ Scheme_Object *scheme_apply_chaperone(Scheme_Object *o, int argc, Scheme_Object 
   int need_pop_mark;
   Scheme_Cont_Frame_Data cframe;
 
+#if COUNT_CHAPS
+  proc_apps++;
+#endif
+
+#if SHORT_CIRCUIT_CHAP_PROC_APPLY
+  if (checks)
+    return _scheme_apply_multi(SCHEME_CHAPERONE_VAL(o), argc, argv);
+  else
+    return scheme_tail_apply(SCHEME_CHAPERONE_VAL(o), argc, argv);
+#endif
+
   if (argv == MZ_RUNSTACK) {
     /* Pushing onto the runstack ensures that `(mcar px->redirects)' won't
        modify argv. */
@@ -3282,7 +3308,8 @@ Scheme_Object *scheme_apply_chaperone(Scheme_Object *o, int argc, Scheme_Object 
       memmove(argv2, argv2 + 1, sizeof(Scheme_Object*)*argc);
     } else
       post = NULL;
-    if (!(SCHEME_CHAPERONE_FLAGS(px) & SCHEME_CHAPERONE_IS_IMPERSONATOR)) {
+    if (!(SCHEME_CHAPERONE_FLAGS(px) & SCHEME_CHAPERONE_IS_IMPERSONATOR)
+        && !SHORT_CIRCUIT_CHAP_RESULT) {
       for (i = 0; i < argc; i++) {
         if (!SAME_OBJ(argv2[i], argv[i])
             && !scheme_chaperone_of(argv2[i], argv[i])) {
@@ -3436,7 +3463,8 @@ Scheme_Object *scheme_apply_chaperone(Scheme_Object *o, int argc, Scheme_Object 
     }
 
     if (c == argc) {
-      if (!(SCHEME_CHAPERONE_FLAGS(px) & SCHEME_CHAPERONE_IS_IMPERSONATOR)) {
+      if (!(SCHEME_CHAPERONE_FLAGS(px) & SCHEME_CHAPERONE_IS_IMPERSONATOR)
+          && !SHORT_CIRCUIT_CHAP_RESULT) {
         for (i = 0; i < argc; i++) {
           if (!SAME_OBJ(argv2[i], argv[i])
               && !scheme_chaperone_of(argv2[i], argv[i])) {

@@ -25,6 +25,7 @@
 
 #include "schpriv.h"
 #include "schmach.h"
+#include "schchap.h"
 
 /* globals */
 READ_ONLY Scheme_Object *scheme_vector_proc;
@@ -418,6 +419,15 @@ Scheme_Object *scheme_chaperone_vector_ref(Scheme_Object *o, int i)
   } else {
     Scheme_Chaperone *px = (Scheme_Chaperone *)o;
     Scheme_Object *a[3], *red, *orig;
+
+#if COUNT_CHAPS
+    vec_apps++;
+#endif
+
+#if SHORT_CIRCUIT_CHAP_VEC_APPY
+    o = SCHEME_CHAPERONE_VAL(o);
+    return SCHEME_VEC_ELS(o)[i];
+#endif
 
 #ifdef DO_STACK_CHECK
     {
@@ -819,6 +829,14 @@ static Scheme_Object *do_chaperone_vector(const char *name, int is_impersonator,
   Scheme_Object *val = argv[0];
   Scheme_Object *redirects;
   Scheme_Hash_Tree *props;
+
+#if COUNT_CHAPS
+  vec_makes++;
+#endif
+
+#if SHORT_CIRCUIT_CHAP_VEC
+  return val;
+#endif
 
   if (SCHEME_CHAPERONEP(val))
     val = SCHEME_CHAPERONE_VAL(val);

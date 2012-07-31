@@ -397,7 +397,8 @@ With this little change, the error message becomes quite readable:
 @(begin
    (set! str
          (with-handlers ((exn:fail? exn-message))
-           (contract-eval '(deposit -10))))
+           (contract-eval '(deposit -10))
+           "a\nb\nc\nd\ne\nf\n"))
    "")
 
 @ctc-section[#:tag "dissecting-contract-errors"]{Dissecting a contract error message}

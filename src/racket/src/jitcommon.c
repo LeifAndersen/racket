@@ -21,6 +21,7 @@
 
 #include "schpriv.h"
 #include "schmach.h"
+#include "schchap.h"
 #include "future.h"
 
 #ifdef MZ_USE_JIT
@@ -943,6 +944,7 @@ static int generate_apply_proxy(mz_jit_state *jitter, int setter)
    original chaperone and index on runstack;
    for setter, put back result in R2, vec in R0, and index in V1 */
 {
+#if !SHORT_CIRCUIT_CHAP_VEC_APPLY
   GC_CAN_IGNORE jit_insn *ref, *ref1, *ref2, *refrts;
 
   CHECK_LIMIT();
@@ -985,6 +987,7 @@ static int generate_apply_proxy(mz_jit_state *jitter, int setter)
   /* if impersonator, no chaperone-of check needed */
   ref1 = jit_bmsi_ul(jit_forward(), JIT_R2, SCHEME_CHAPERONE_IS_IMPERSONATOR);
 
+#if !SHORT_CIRCUIT_CHAP_RESULT
   if (setter)
     jit_ldxi_p(JIT_R1, JIT_RUNSTACK, WORDS_TO_BYTES(-1)); /* saved value */
   else
@@ -999,11 +1002,13 @@ static int generate_apply_proxy(mz_jit_state *jitter, int setter)
   JIT_UPDATE_THREAD_RSPTR();
   (void)mz_finish_lwe(ts_vector_check_chaperone_of, refrts);
   jit_retval(JIT_R0);
+#endif
   CHECK_LIMIT();
             
   mz_patch_branch(ref);
   mz_patch_branch(ref1);
   mz_patch_branch(ref2);
+#endif
   if (setter) {
     jit_movr_p(JIT_R2, JIT_R0); /* result needed in R2 for setter */
     jit_ldxi_p(JIT_V1, JIT_RUNSTACK, WORDS_TO_BYTES(1)); /* saved index */
@@ -1012,6 +1017,12 @@ static int generate_apply_proxy(mz_jit_state *jitter, int setter)
   }
   jit_addi_p(JIT_RUNSTACK, JIT_RUNSTACK, WORDS_TO_BYTES(2)); /* don't need saved anymore */
   JIT_UPDATE_THREAD_RSPTR();
+
+#if COUNT_CHAPS
+  jit_ldi_l(JIT_R1, &vec_apps);
+  jit_addi_l(JIT_R1, JIT_R1, 1);
+  jit_sti_l(&vec_apps, JIT_R1);
+#endif
 
   return 1;
 }

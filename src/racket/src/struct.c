@@ -21,6 +21,7 @@
 
 #include "schpriv.h"
 #include "schmach.h"
+#include "schchap.h"
 
 #define PROP_USE_HT_COUNT 5
 
@@ -1029,6 +1030,15 @@ static Scheme_Object *do_chaperone_prop_accessor(const char *who, Scheme_Object 
       Scheme_Object *v;
       Scheme_Hash_Tree *ht;
 
+#if COUNT_CHAPS
+      struct_apps++;
+#endif
+
+#if SHORT_CIRCUIT_CHAP_STRUCT_APPLY
+      arg = SCHEME_CHAPERONE_VAL(arg);
+      continue;
+#endif
+
       if (px->props) {
         v = scheme_hash_tree_get(px->props, prop);
         if (v)
@@ -1941,6 +1951,15 @@ static Scheme_Object *chaperone_struct_ref(const char *who, Scheme_Object *o, in
     } else {
       Scheme_Chaperone *px = (Scheme_Chaperone *)o;
       Scheme_Object *a[2], *red, *orig;
+
+#if COUNT_CHAPS
+      struct_apps++;
+#endif
+
+#if SHORT_CIRCUIT_CHAP_STRUCT_APPLY
+      o = SCHEME_CHAPERONE_VAL(o);
+      return ((Scheme_Structure *)o)->slots[i];
+#endif
 
       if (!SCHEME_VECTORP(px->redirects)
           || SCHEME_FALSEP(SCHEME_VEC_ELS(px->redirects)[PRE_REDIRECTS + i])) {
@@ -5175,6 +5194,14 @@ static Scheme_Object *do_chaperone_struct(const char *name, int is_impersonator,
   Scheme_Hash_Tree *props = NULL, *red_props = NULL, *setter_positions = NULL;
 
   if (argc == 1) return argv[0];
+
+#if COUNT_CHAPS
+  struct_makes++;
+#endif
+
+#if SHORT_CIRCUIT_CHAP_STRUCT
+  return argv[0];
+#endif
 
   if (SCHEME_CHAPERONEP(val)) {
     props = ((Scheme_Chaperone *)val)->props;
