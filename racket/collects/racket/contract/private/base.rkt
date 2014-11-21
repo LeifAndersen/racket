@@ -35,13 +35,12 @@
     [(_ c v pos neg name loc)
      (syntax/loc stx
        ;(apply-contract c v pos neg name loc))]
-       (apply-contract (lambda (x) #t) v pos neg name loc))]
+       v)]
     [(_ c v pos neg)
      (with-syntax ([name (syntax-local-infer-name stx)])
       (syntax/loc stx
         ;(apply-contract c v pos neg 'name
-        (apply-contract (lambda (x) #t) v pos neg 'name
-                        (build-source-location #f))))]
+        v))]
     [(_ c v pos neg src)
      (raise-syntax-error 'contract
        (string-append

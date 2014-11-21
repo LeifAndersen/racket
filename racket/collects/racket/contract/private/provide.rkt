@@ -350,7 +350,8 @@
             (raise-syntax-error #f "expected an identifier" stx #'new-id))
           (unless (identifier? #'orig-id)
             (raise-syntax-error #f "expected an identifier" stx #'orig-id))
-          (define-values (pos-blame-party-expr srcloc-expr)
+          #'(define new-id orig-id)
+          #;(define-values (pos-blame-party-expr srcloc-expr)
             (let loop ([kwd-args (syntax->list #'(kwd-args ...))]
                        [pos-blame-party-expr #'(quote-module-path)]
                        [srcloc-expr #f])
@@ -378,7 +379,7 @@
                     (raise-syntax-error #f "expected either the keyword #:pos-source of #:srcloc"
                                         stx
                                         (car kwd-args))])])))
-          (internal-function-to-be-figured-out #'ctrct
+  #;(internal-function-to-be-figured-out #'ctrct
                                                #'orig-id
                                                #'orig-id
                                                #'new-id
