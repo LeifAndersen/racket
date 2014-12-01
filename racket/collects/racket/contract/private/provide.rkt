@@ -526,7 +526,7 @@
                        (loop (cdr clauses) exists-binders)
                        (cons (code-for-one-id provide-stx
                                               (syntax this-name) #f
-                                              (add-exists-binders (syntax contract) exists-binders)
+                                              (add-exists-binders (syntax any/c) exists-binders)
                                               (syntax new-name))
                              (loop (cdr clauses) exists-binders))))]
                 [(rename this-name new-name contract)
@@ -561,7 +561,7 @@
                        (let ([sc (build-struct-code provide-stx
                                                     (syntax struct-name)
                                                     (syntax->list (syntax (field-name ...)))
-                                                    (map (λ (x) (add-exists-binders x exists-binders))
+                                                    (map (λ (x) (add-exists-binders (syntax any/c) exists-binders))
                                                          (syntax->list (syntax (contract ...))))
                                                     omit-constructor?)])
                          (cons sc (loop (cdr clauses) exists-binders)))))]
@@ -610,7 +610,7 @@
                        (loop (cdr clauses) exists-binders)
                        (cons (code-for-one-id provide-stx
                                               (syntax name) #f
-                                              (add-exists-binders (syntax contract)
+                                              (add-exists-binders (syntax any/c)
                                                                   exists-binders)
                                               #f)
                              (loop (cdr clauses) exists-binders))))]
